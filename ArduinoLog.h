@@ -34,7 +34,7 @@ typedef void (*printfunction)(Print*);
 #define LOG_LEVEL_FATAL   1
 #define LOG_LEVEL_ERROR   2
 #define LOG_LEVEL_WARNING 3
-#define LOG_LEVEL_NOTICE  4
+#define LOG_LEVEL_INFO  4
 #define LOG_LEVEL_TRACE   5
 #define LOG_LEVEL_VERBOSE 6
 
@@ -72,8 +72,8 @@ typedef void (*printfunction)(Print*);
  * 1 - LOG_LEVEL_FATAL      fatal errors
  * 2 - LOG_LEVEL_ERROR      all errors
  * 3 - LOG_LEVEL_WARNING    errors and warnings
- * 4 - LOG_LEVEL_NOTICE     errors, warnings and notices
- * 5 - LOG_LEVEL_TRACE      errors, warnings, notices, traces
+ * 4 - LOG_LEVEL_INFO     errors, warnings and infos
+ * 5 - LOG_LEVEL_TRACE      errors, warnings, infos, traces
  * 6 - LOG_LEVEL_VERBOSE    all
  */
 
@@ -163,10 +163,10 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-	template <class T, typename... Args> void fatal(T msg, Args... args)
+	template <class T, typename... Args> void fatal(const char* tag, T msg, Args... args)
 	{
 #ifndef DISABLE_LOGGING
-		printLevel(LOG_LEVEL_FATAL, msg, args...);
+		printLevel(LOG_LEVEL_FATAL, tag, msg, args...);
 #endif
 	}
 
@@ -180,9 +180,9 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-	template <class T, typename... Args> void error(T msg, Args... args){
+	template <class T, typename... Args> void error(const char* tag, T msg, Args... args){
 #ifndef DISABLE_LOGGING
-		printLevel(LOG_LEVEL_ERROR, msg, args...);
+		printLevel(LOG_LEVEL_ERROR, tag, msg, args...);
 #endif
 	}
 
@@ -196,27 +196,27 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-	template <class T, typename... Args> void warning(T msg, Args...args)
+	template <class T, typename... Args> void warning(const char* tag, T msg, Args...args)
 	{
 #ifndef DISABLE_LOGGING
-		printLevel(LOG_LEVEL_WARNING, msg, args...);
+		printLevel(LOG_LEVEL_WARNING, tag, msg, args...);
 #endif
 	}
 
 	/**
-	 * Output a notice message. Output message contains
+	 * Output a info message. Output message contains
 	 * N: followed by original message
-	 * Notice messages are printed out at
-	 * loglevels >= LOG_LEVEL_NOTICE
+	 * Info messages are printed out at
+	 * loglevels >= LOG_LEVEL_INFO
 	 * 
 	 * \param msg format string to output
 	 * \param ... any number of variables
 	 * \return void
 	 */
-	template <class T, typename... Args> void notice(T msg, Args...args)
+	template <class T, typename... Args> void info(const char* tag, T msg, Args...args)
 	{
 #ifndef DISABLE_LOGGING
-		printLevel(LOG_LEVEL_NOTICE, msg, args...);
+		printLevel(LOG_LEVEL_INFO, tag, msg, args...);
 #endif
 	}
 
@@ -230,10 +230,10 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	*/
-	template <class T, typename... Args> void trace(T msg, Args... args)
+	template <class T, typename... Args> void trace(const char* tag, T msg, Args... args)
 	{
 #ifndef DISABLE_LOGGING
-		printLevel(LOG_LEVEL_TRACE, msg, args...);
+		printLevel(LOG_LEVEL_TRACE, tag, msg, args...);
 #endif
 	}
 
@@ -247,10 +247,10 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-	template <class T, typename... Args> void verbose(T msg, Args... args)
+	template <class T, typename... Args> void verbose(const char* tag, T msg, Args... args)
 	{
 #ifndef DISABLE_LOGGING
-		printLevel(LOG_LEVEL_VERBOSE, msg, args...);
+		printLevel(LOG_LEVEL_VERBOSE, tag, msg, args...);
 #endif
 	}
 
@@ -261,7 +261,7 @@ private:
 
 	void printFormat(const char format, va_list *args);
 
-	template <class T> void printLevel(int level, T msg, ...)
+	template <class T> void printLevel(int level, const char* tag, T msg, ...)
 	{
 #ifndef DISABLE_LOGGING
 		if (level > _level)
@@ -275,10 +275,15 @@ private:
 		}
 
 		if (_showLevel) {
-			static const char levels[] = "FEWNTV";
+			static const char levels[] = "FEWITV";
 			_logOutput->print(levels[level - 1]);
-			_logOutput->print(": ");
 		}
+
+        _logOutput->print(" (");
+        _logOutput->print(millis());
+        _logOutput->print(") ");
+        _logOutput->print(tag);
+        _logOutput->print(": ");
 
 		va_list args;
 		va_start(args, msg);
